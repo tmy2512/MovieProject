@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Movie service
+  movie-service:
+    build: ./movie-service
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - db
+    ports:
+      - "8001:8000"
+
+  # Showtime service
+  showtime-service:
+    build: ./showtime-service
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+      - MOVIE_SERVICE_URL=http://movie-service:8000
+    depends_on:
+      - db
+      - movie-service
+    ports:
+      - "8002:8000"
+
+  # Booking service
+  booking-service:
+    build: ./booking-service
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+      - SHOWTIME_SERVICE_URL=http://showtime-service:8000
+      - PAYMENT_SERVICE_URL=http://payment-service:8000
+    depends_on:
+      - db
+      - showtime-service
+      - payment-service
+    ports:
+      - "8003:8000"
+
+  # Payment service
+  payment-service:
+    build: ./payment-service
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - db
+    ports:
+      - "8004:8000"
+
+  # User service
+  user-service:
+    build: ./user-service
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - db
+    ports:
+      - "8005:8000"
+
+  # Report service
+  report-service:
+    build: ./report-service
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+      - MOVIE_SERVICE_URL=http://movie-service:8000
+      - SHOWTIME_SERVICE_URL=http://showtime-service:8000
+      - BOOKING_SERVICE_URL=http://booking-service:8000
+      - PAYMENT_SERVICE_URL=http://payment-service:8000
+    depends_on:
+      - db
+      - movie-service
+      - showtime-service
+      - booking-service
+      - payment-service
+    volumes:
+      - ./report-service/exports:/app/exports
+    ports:
+      - "8006:8000"
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - MOVIE_SERVICE_URL=http://movie-service:8000
+      - SHOWTIME_SERVICE_URL=http://showtime-service:8000
+      - BOOKING_SERVICE_URL=http://booking-service:8000
+      - PAYMENT_SERVICE_URL=http://payment-service:8000
+      - USER_SERVICE_URL=http://user-service:8000
+      - REPORT_SERVICE_URL=http://report-service:8000
+    depends_on:
+      - movie-service
+      - showtime-service
+      - booking-service
+      - payment-service
+      - user-service
+      - report-service
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data: 
