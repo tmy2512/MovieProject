@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Frontend Service
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_MOVIE_SERVICE_URL=http://localhost:8001
+    depends_on:
+      - movie-service
+    volumes:
+      - ./frontend:/app
+
+  # Movie Service
+  movie-service:
+    build: ./movie-service
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@movie-db:5432/movie_db
+      - SECRET_KEY=${SECRET_KEY}
+      - POSTGRES_DB=movie_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=movie-db
+      - POSTGRES_PORT=5432
+    depends_on:
+      movie-db:
+        condition: service_healthy
+
+  # Database
+  movie-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=movie_db
+    volumes:
+      - movie-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  movie-db-data:

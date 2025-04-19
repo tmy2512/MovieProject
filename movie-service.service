@@ -1,0 +1,14 @@
+[Unit]
+Description=Movie Service
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/kienmy/movie-project
+ExecStart=/bin/bash /home/kienmy/movie-project/deploy.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target 
