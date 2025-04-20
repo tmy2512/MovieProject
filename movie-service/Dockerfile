@@ -19,8 +19,9 @@ done\n\
 python manage.py makemigrations movies\n\
 python manage.py migrate\n\
 echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser(\"admin\", \"admin@example.com\", \"admin123\")" | python manage.py shell\n\
-python manage.py runserver 0.0.0.0:8000' > /app/start.sh && \
-chmod +x /app/start.sh
+python manage.py runserver 0.0.0.0:8000' > /app/start.sh
+
+RUN chmod 755 /app/start.sh
 
 # Run migrations and start server
-CMD ["/app/start.sh"] 
+CMD ["/bin/bash", "/app/start.sh"] 

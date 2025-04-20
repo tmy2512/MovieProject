@@ -15,6 +15,22 @@ import {
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
+const SAMPLE_MOVIES = [
+  {
+    id: 1,
+    title: "Sample Movie",
+    description: "This is a sample movie description. Enjoy the show!",
+    duration: 120,
+    release_date: "2024-01-01",
+    rating: 8.5,
+    genre: "Action",
+    director: "Jane Doe",
+    cast: "John Smith, Alice Johnson",
+    poster_url: "https://via.placeholder.com/400x600?text=Sample+Movie"
+  }
+  // You can add more sample movies here if you want
+];
+
 const MovieList = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +50,11 @@ const MovieList = () => {
 
     fetchMovies();
   }, []);
+
+  // Use sample data if movies is empty after loading
+  const displayMovies = (!loading && Array.isArray(movies) && movies.length === 0)
+    ? SAMPLE_MOVIES
+    : (Array.isArray(movies) ? movies : []);
 
   if (loading) {
     return (
@@ -57,7 +78,7 @@ const MovieList = () => {
         Now Showing
       </Typography>
       <Grid container spacing={4}>
-        {(Array.isArray(movies) ? movies : []).map((movie) => (
+        {displayMovies.map((movie) => (
           <Grid item key={movie.id} xs={12} sm={6} md={4}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', transition: '0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardMedia
@@ -75,8 +96,17 @@ const MovieList = () => {
                   <Chip label={`Rating: ${movie.rating}`} sx={{ mr: 1 }} />
                   <Chip label={new Date(movie.release_date).getFullYear()} />
                 </Box>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   {movie.description.substring(0, 100)}...
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Director:</strong> {movie.director}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Cast:</strong> {movie.cast}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Duration:</strong> {movie.duration} min
                 </Typography>
                 <Button
                   component={Link}
