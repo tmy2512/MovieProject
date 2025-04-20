@@ -11,14 +11,104 @@ services:
       - REACT_APP_MOVIE_SERVICE_URL=http://localhost:8001
       - REACT_APP_USER_SERVICE_URL=http://localhost:8002
       - REACT_APP_BOOKING_SERVICE_URL=http://localhost:8003
+      - REACT_APP_PAYMENT_SERVICE_URL=http://localhost:8004
+      - REACT_APP_REPORT_SERVICE_URL=http://localhost:8005
+      - REACT_APP_SHOWTIME_SERVICE_URL=http://localhost:8006
     # volumes:
     #   - ./frontend:/app
     depends_on:
       - movie-service
       - user-service
       - booking-service
+      - payment-service
+      - report-service
+      - showtime-service
 
-  # Movie Service
+  # Databases
+  movie-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=movie_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - movie-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=user_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  booking-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=booking_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - booking-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  payment-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=payment_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - payment-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  report-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=report_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - report-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  showtime-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=showtime_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - showtime-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   movie-service:
     build: ./movie-service
     ports:
@@ -70,53 +160,76 @@ services:
       user-service:
         condition: service_started
 
-  # Databases
-  movie-db:
-    image: postgres:13
+  # Payment Service
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8004:8000"
     environment:
-      - POSTGRES_DB=movie_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - DATABASE_URL=postgres://postgres:postgres@payment-db:5432/payment_db
+      - SECRET_KEY=${SECRET_KEY}
+      - BOOKING_SERVICE_URL=http://booking-service:8000
     volumes:
-      - movie-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - ./payment-service:/app
+      - ./payment-service/static:/app/static
+      - ./payment-service/media:/app/media
+    depends_on:
+      payment-db:
+        condition: service_healthy
+      booking-service:
+        condition: service_started
 
-  user-db:
-    image: postgres:13
+  # Report Service
+  report-service:
+    build: ./report-service
+    ports:
+      - "8005:8000"
     environment:
-      - POSTGRES_DB=user_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - DATABASE_URL=postgres://postgres:postgres@report-db:5432/report_db
+      - SECRET_KEY=${SECRET_KEY}
+      - BOOKING_SERVICE_URL=http://booking-service:8000
+      - PAYMENT_SERVICE_URL=http://payment-service:8000
+      - MOVIE_SERVICE_URL=http://movie-service:8000
+      - USER_SERVICE_URL=http://user-service:8000
     volumes:
-      - user-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - ./report-service:/app
+      - ./report-service/static:/app/static
+      - ./report-service/media:/app/media
+    depends_on:
+      report-db:
+        condition: service_healthy
+      booking-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      movie-service:
+        condition: service_started
+      user-service:
+        condition: service_started
 
-  booking-db:
-    image: postgres:13
+  # Showtime Service
+  showtime-service:
+    build: ./showtime-service
+    ports:
+      - "8006:8000"
     environment:
-      - POSTGRES_DB=booking_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - DATABASE_URL=postgres://postgres:postgres@showtime-db:5432/showtime_db
+      - SECRET_KEY=${SECRET_KEY}
+      - MOVIE_SERVICE_URL=http://movie-service:8000
     volumes:
-      - booking-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - ./showtime-service:/app
+      - ./showtime-service/static:/app/static
+      - ./showtime-service/media:/app/media
+    depends_on:
+      showtime-db:
+        condition: service_healthy
+      movie-service:
+        condition: service_started
 
 volumes:
   movie-db-data:
-    driver: local
   user-db-data:
-    driver: local
   booking-db-data:
-    driver: local
+  payment-db-data:
+  report-db-data:
+  showtime-db-data:

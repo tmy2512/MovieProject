@@ -2,6 +2,14 @@ import os
 from pathlib import Path
 import dj_database_url
 
+
+BOOKING_SERVICE_URL = os.environ.get('BOOKING_SERVICE_URL', 'http://booking-service:8000')
+MOVIE_SERVICE_URL = os.environ.get('MOVIE_SERVICE_URL', 'http://movie-service:8000')
+USER_SERVICE_URL = os.environ.get('USER_SERVICE_URL', 'http://user-service:8000')
+REPORT_SERVICE_URL = os.environ.get('REPORT_SERVICE_URL', 'http://report-service:8000')
+SHOWTIME_SERVICE_URL = os.environ.get('SHOWTIME_SERVICE_URL', 'http://showtime-service:8000')
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
