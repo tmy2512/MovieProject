@@ -10,8 +10,8 @@ services:
       - REACT_APP_MOVIE_SERVICE_URL=http://localhost:8001
     depends_on:
       - movie-service
-    volumes:
-      - ./frontend:/app
+    # volumes:
+    #   - ./frontend:/app
 
   # Movie Service
   movie-service:
