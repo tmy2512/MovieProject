@@ -11,14 +11,13 @@ RUN npm install
 # Copy project files
 COPY . .
 
-# Build the app
-RUN npm run build
-
-# Install serve to run the app
-RUN npm install -g serve
+# Set environment variables
+ENV NODE_ENV=development
+ENV CHOKIDAR_USEPOLLING=true
+ENV WDS_SOCKET_PORT=0
 
 # Expose port
 EXPOSE 3000
 
-# Start the app
-CMD ["serve", "-s", "build", "-l", "3000"] 
+# Start the app in development mode with hot reloading
+CMD ["npm", "start"] 

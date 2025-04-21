@@ -15,22 +15,6 @@ import {
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-const SAMPLE_MOVIES = [
-  {
-    id: 1,
-    title: "Sample Movie",
-    description: "This is a sample movie description. Enjoy the show!",
-    duration: 120,
-    release_date: "2024-01-01",
-    rating: 8.5,
-    genre: "Action",
-    director: "Jane Doe",
-    cast: "John Smith, Alice Johnson",
-    poster_url: "https://via.placeholder.com/400x600?text=Sample+Movie"
-  }
-  // You can add more sample movies here if you want
-];
-
 const MovieList = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,10 +23,18 @@ const MovieList = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const response = await axios.get('http://localhost:8001/movies/');
+        const response = await axios.get('http://localhost:8001/api/movies/', {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
         setMovies(response.data);
+        setError(null);
       } catch (error) {
-        setError('Error fetching movies');
+        console.error('Error fetching movies:', error);
+        setError('Error fetching movies. Please try again later.');
+        setMovies([]);
       } finally {
         setLoading(false);
       }
@@ -50,11 +42,6 @@ const MovieList = () => {
 
     fetchMovies();
   }, []);
-
-  // Use sample data if movies is empty after loading
-  const displayMovies = (!loading && Array.isArray(movies) && movies.length === 0)
-    ? SAMPLE_MOVIES
-    : (Array.isArray(movies) ? movies : []);
 
   if (loading) {
     return (
@@ -72,32 +59,52 @@ const MovieList = () => {
     );
   }
 
+  if (!movies || movies.length === 0) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Alert severity="info">No movies available at the moment.</Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Now Showing
       </Typography>
       <Grid container spacing={4}>
-        {displayMovies.map((movie) => (
+        {movies.map((movie) => (
           <Grid item key={movie.id} xs={12} sm={6} md={4}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', transition: '0.3s', '&:hover': { boxShadow: 6 } }}>
               <CardMedia
                 component="img"
                 height="400"
-                image={movie.poster_url}
+                image={movie.poster_url || 'https://via.placeholder.com/400x600?text=No+Poster'}
                 alt={movie.title}
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/400x600?text=No+Poster';
+                }}
               />
               <CardContent>
                 <Typography gutterBottom variant="h5" component="div">
                   {movie.title}
                 </Typography>
                 <Box sx={{ mb: 1 }}>
-                  <Chip label={movie.genre} color="primary" sx={{ mr: 1 }} />
-                  <Chip label={`Rating: ${movie.rating}`} sx={{ mr: 1 }} />
-                  <Chip label={new Date(movie.release_date).getFullYear()} />
+                  {movie.genre.split(',').map((g, index) => (
+                    <Chip 
+                      key={index} 
+                      label={g.trim()} 
+                      color="primary" 
+                      sx={{ mr: 1, mb: 1 }} 
+                    />
+                  ))}
+                  <Chip label={`Rating: ${movie.rating}`} sx={{ mr: 1, mb: 1 }} />
+                  <Chip label={new Date(movie.release_date).getFullYear()} sx={{ mb: 1 }} />
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {movie.description.substring(0, 100)}...
+                  {movie.description.length > 150 
+                    ? `${movie.description.substring(0, 150)}...` 
+                    : movie.description}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   <strong>Director:</strong> {movie.director}
